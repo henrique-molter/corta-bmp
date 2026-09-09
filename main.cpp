@@ -366,6 +366,9 @@ bool carregarImagemInterna(const string& caminho, const CabecalhoArquivo& cab, I
 
 // 3. Converte a imagem na RAM para escala de cinza usando a fórmula de luminância
 void ConvGray(ImagemInterna& img) {
+    //o "&" depois de ImagemInterna aponta que a funçao altera diretamente a estrutura original do vetor
+
+    //percorre o vetor pixels, avançando de 3 em 3, até chegar no valor total de pixels na linha.
     for (size_t i = 0; i < img.pixels.size(); i += 3) {
         unsigned char b = img.pixels[i];      // azul
         unsigned char g = img.pixels[i + 1];  // verde
@@ -382,17 +385,23 @@ void ConvGray(ImagemInterna& img) {
 
 // 4. Recorta uma sub-região da imagem e gera uma nova ImagemInterna
 bool RecImagem(const ImagemInterna& origem, ImagemInterna& destino, int x, int y, int larguraCorte, int alturaCorte) {
+    //^-impede que a Imagem interna seja modificada na função
+
+    //validações de segurança
     if (x < 0 || y < 0 || x + larguraCorte > origem.largura || y + alturaCorte > origem.altura) {
         cerr << "Erro: Dimensoes de corte fora dos limites da imagem original." << endl;
         return false;
     }
 
+    //atribui os novos valores de largura e altura após o recorte
     destino.largura = larguraCorte;
     destino.altura = alturaCorte;
-    destino.pixels.resize(larguraCorte * alturaCorte * 3);
+    destino.pixels.resize(larguraCorte * alturaCorte * 3);//redimensiona o vetor de pixels da struct destino.
 
+    //laços que percorrem a nova região recortada linha por linha e coluna por coluna
     for (int lin = 0; lin < alturaCorte; lin++) {
         for (int col = 0; col < larguraCorte; col++) {
+            //mapeia a posição da coordenada bidimensional no vetor em que foi alocada.
             int idxOrigem  = ((y + lin) * origem.largura + (x + col)) * 3;
             int idxDestino = (lin * larguraCorte + col) * 3;
 
@@ -406,17 +415,20 @@ bool RecImagem(const ImagemInterna& origem, ImagemInterna& destino, int x, int y
 
 // 5. Salva a ImagemInterna em um novo arquivo BMP (gerando o cabeçalho e reinsirindo o padding)
 bool SaveBMP(const string& caminho, const ImagemInterna& img) {
+    //o"const" evita que a função mude os valores das structs e variaveis.
     ofstream arq(caminho, ios::binary);
     if (!arq) {
         cerr << "Erro: Nao foi possivel criar o arquivo BMP de saída." << endl;
         return false;
     }
 
-    int bytesPorLinha = img.largura * 3;
-    int padding = (4 - (bytesPorLinha % 4)) % 4;
-    uint32_t tamImagem = (bytesPorLinha + padding) * img.altura;
+    int bytesPorLinha = img.largura * 3;//calcula a quantidade de bytes uteis de cor por linha, como cada pixel utiliza 3 bytes, multiplica por 3.
+    int padding = (4 - (bytesPorLinha % 4)) % 4;//o padding ja foi explicado anteriormente
+    uint32_t tamImagem = (bytesPorLinha + padding) * img.altura;//calcula o tamanho total da matriz em bytes, considerando os ocupados com "lixo"
 
-    CabecalhoArquivo cab = {};
+
+    CabecalhoArquivo cab = {}; //inicializa cab com zeros em todos os campos.
+    //define todos os campos do cabeçalho conforme os padroes de BMP
     cab.tipo[0] = 'B'; cab.tipo[1] = 'M';
     cab.tamArquivo = 54 + tamImagem;
     cab.offset = 54;
@@ -428,17 +440,18 @@ bool SaveBMP(const string& caminho, const ImagemInterna& img) {
     cab.compressao = 0;
     cab.tamImagem = tamImagem;
 
-    arq.write((char*)&cab, sizeof(cab));
+    arq.write((char*)&cab, sizeof(cab));//gravação direta da struct em uma unica linha
 
-    unsigned char paddingZero[3] = {0, 0, 0};
+    unsigned char paddingZero[3] = {0, 0, 0};;//prepara um vetor de 3bytes com valor = 0 para ser usado no final de cada linha.
+    //laço que percorre todas as linhas do arwquivo
     for (int y = 0; y < img.altura; y++) {
-        int inicioLinha = y * img.largura * 3;
-        arq.write((char*)&img.pixels[inicioLinha], bytesPorLinha);
+        int inicioLinha = y * img.largura * 3;//calcula a posição no vetor pixels onde começam os dados da linha atual.
+        arq.write((char*)&img.pixels[inicioLinha], bytesPorLinha);//escreve no arquivo todos os bytes de cor referentes à linha atual.
         if (padding > 0) {
-            arq.write((char*)paddingZero, padding);
+            arq.write((char*)paddingZero, padding);;//adiciona os paddings necessários para o numero de bytes na linha ser multiplo de 4.
         }
     }
 
-    arq.close();
+    arq.close();//grava infos no arquivo
     return true;
 }
