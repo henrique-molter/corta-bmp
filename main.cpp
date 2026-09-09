@@ -43,7 +43,12 @@ string extraiValorJSON(const string& json, const string& chave);
 void extraiVetorValores(const string& strVetor, int& v1, int& v2);
 
 //Imagem
-
+bool AbreArq(const string& caminho, CabecalhoArquivo& cab);
+bool carregarImagemInterna(const string& caminho, const CabecalhoArquivo& cab, ImagemInterna& img);
+void ConvGray(ImagemInterna& img);
+bool RecImagem(const ImagemInterna& origem, ImagemInterna& destino, int x, int y, int larguraCorte, int alturaCorte);
+bool SaveBMP(const string& caminho, const ImagemInterna& img);
+bool exportarParaTexto(const string& caminho, const ImagemInterna& img);
 
 // Grava JSON
 void GravaCanalMatriz(ofstream& arq, const ImagemInterna& img, int deslocamentoCanal);
