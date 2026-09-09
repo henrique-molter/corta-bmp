@@ -1,0 +1,5 @@
+{ "cmd": "Abra", "arq": "batman.bmp" }
+{ "cmd": "ConvGray" }
+{ "cmd": "Recorta", "ini": [10, 10], "tam": [50, 50] }
+{ "cmd": "GravaBMP", "arq": "batman_recortada.bmp" }
+{ "cmd": "GravaJson", "arq": "saida_matriz", "canal": "A" }
